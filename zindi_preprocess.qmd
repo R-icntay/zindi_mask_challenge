@@ -1,0 +1,115 @@
+---
+title: "Zindi Challenge Preprcosseing"
+author: "Eric Wanjau"
+toc: true
+format: 
+  html:
+    number-sections: true
+    toc-location: left
+    code-tools: true
+    code-fold: false
+    code-link: true
+editor: visual
+execute: 
+  eval: false
+  warning: false
+  message: false
+---
+
+## Description
+
+::: callout-note
+This is jus a preprocessing script for:
+
+**Spot the Mask Challenge by[ #ZindiWeekendz](http://www.zindi.africa/)**
+
+Link to challenge:
+
+<https://zindi.africa/competitions/zindiweekendz-learning-spot-the-mask-challenge/data>
+:::
+
+The objective of this challenge is to create an image classification machine learning model to accurately predict the likelihood that an image contains a person wearing a face mask, or not.
+The total dataset contains 1,800+ images of people either wearing masks or not.
+
+You will need to use train_labels.csv to split the data into the train and test sets.
+
+> `1` indicates an image with a person with a `mask`, `0` indicates a person `without a mask`.
+
+## Splitting data into train and test sets
+
+```{r}
+# Load required packages
+library(tidyverse)
+library(here)
+
+# Import train and test labels
+train_labels <- read_csv("train_labels.csv")
+test_files <- read_csv("SampleSubmission.csv") %>% 
+  pull(image)
+
+# Obtain train masked and nonmasked image files
+# This can be done in a function: group_by + nest + map? if more categories?
+
+masked <- train_labels %>% 
+  filter(target == 1) %>% 
+  pull(image)
+
+nonmasked <- train_labels %>% 
+  filter(target == 0) %>% 
+  pull(image)
+
+# How many masked images
+length(masked)
+
+# How many nonmasked images
+length(nonmasked)
+
+# How many test files
+length(test_files)
+```
+
+## Place the images into their own folders
+
+```{r}
+# Image file names
+all_files <- list.files("images")
+```
+
+```{r}
+
+# Create train images folder
+dir.create("train_images/masked")
+dir.create("train_images/nonmasked")
+
+# dir.exists("images")
+
+# Create test folder
+dir.create("test_images")
+
+# Copy masked files from `images` folder into `train/masked` folder
+invisible(file.copy(from = here("images", masked),
+          to = here("train_images", "masked"),
+          overwrite = TRUE))
+
+# Copy unmasked files from `images` folder to `train/nonmasked` folder
+invisible(file.copy(from = here("images", nonmasked),
+          to = here("train_images", "nonmasked"),
+          overwrite = TRUE))
+
+# Copy test files into test folder
+invisible(file.copy(from = here("images", test_files),
+          to = here("test_images"),
+          overwrite = TRUE))
+```
+
+```{r}
+# Alternative solution for test files
+# What are the test files
+# Discard train files from all_files
+test_files <- discard(all_files, all_files %in% train_labels$image)
+
+# Copy test files into test folder
+invisible(file.copy(from = here("images", test_files),
+          to = here("test_images"),
+          overwrite = TRUE))
+```
